@@ -60,7 +60,7 @@ class Workload:
 
         self.ts_start = time.time()
         self.popen = subprocess.Popen(self.cmdline, stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE, shell=True)
+                                      stderr=subprocess.PIPE, shell=True, executable='/bin/bash')
         self.stdout, self.stderr = self.popen.communicate()  # blocks process exit
         assert(self.popen.returncode == 0)
         self.ts_finish = time.time()
@@ -186,6 +186,61 @@ class Linpack(Workload):
         after_exec = ' '.join(('/usr/bin/time -v', bin_path, cmdline))
         full_command = ' '.join((prefix, set_vars, 'exec', set_cpu, after_exec))
         return full_command
+
+class MCF429(Workload):
+	wname = 'mcf'
+	ideal_mem = 345
+	min_ratio = 0.05
+	min_mem = int(min_ratio * ideal_mem)
+	binary_name = 'mcf'
+	cpu_req = 1
+	coeff = [0]
+
+	def get_cmdline(self, procs_path, pinned_cpus):
+		prefix = "echo $$ > {} &&".format(procs_path)
+		arg = "{}/raw_eth_pktgen/429.mcf.origin/data/train/input/inp.in".format(constants.WORK_DIR);
+		shell_cmd = '/usr/bin/time -v {}/raw_eth_pktgen/429.mcf.origin/src/mcf {}'.format(constants.WORK_DIR, arg)
+		pinned_cpus_string = ','.join(map(str, pinned_cpus))
+		set_cpu = 'taskset -c {}'.format(pinned_cpus_string)
+		full_cmd = ' '.join((prefix, 'exec', set_cpu, shell_cmd))
+		return full_cmd
+
+class Interleave(Workload):
+	wname = 'interlf'
+	ideal_mem = 5150
+	min_ratio = 0
+	min_mem = int(min_ratio * ideal_mem)
+	binary_name = 'interlf-ref'
+	cpu_req = 1
+	coeff = [0]
+
+	def get_cmdline(self, procs_path, pinned_cpus):
+		prefix = "echo $$ > {} &&".format(procs_path)
+		arg = ''
+		shell_cmd = '/usr/bin/time -v {}/raw_eth_pktgen/build/bin/interlf-ref {}'.format(constants.WORK_DIR, arg)
+		pinned_cpus_string = ','.join(map(str, pinned_cpus))
+		set_cpu = 'taskset -c {}'.format(pinned_cpus_string)
+		full_cmd = ' '.join((prefix, 'exec', set_cpu, shell_cmd))
+		return full_cmd
+
+
+class Dataframe(Workload):
+	wname = 'dataframe'
+	ideal_mem = 31744
+	min_ratio = 0
+	min_mem = int(min_ratio * ideal_mem)
+	binary_name = 'main'
+	cpu_req = 1
+	coeff = [0]
+
+	def get_cmdline(self, procs_path, pinned_cpus):
+		prefix = "echo $$ > {} &&".format(procs_path)
+		arg = ''
+		shell_cmd = '/usr/bin/time -v {}/raw_eth_pktgen/build/bin/main {}'.format(constants.WORK_DIR, arg)
+		pinned_cpus_string = ','.join(map(str, pinned_cpus))
+		set_cpu = 'taskset -c {}'.format(pinned_cpus_string)
+		full_cmd = ' '.join((prefix, 'exec', set_cpu, shell_cmd))
+		return full_cmd
 
 
 class Tfinception(Workload):
@@ -420,4 +475,7 @@ def get_workload_class(wname):
             'spark': Spark,
             'kmeans': Kmeans,
             'memaslap': Memaslap,
-            'stream': Stream}[wname]
+            'stream': Stream,
+	    'mcf': MCF429,
+	    'interlf': Interleave,
+	    'dataframe': Dataframe}[wname]

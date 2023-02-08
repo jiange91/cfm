@@ -2,3 +2,6 @@
 	path = tensorflow/benchmarks
 	url = https://github.com/tensorflow/benchmarks.git
 	branch = cnn_tf_v1.14_compatible
+[submodule "raw_eth_pktgen"]
+	path = raw_eth_pktgen
+	url = https://github.com/depctg/raw_eth_pktgen.git
